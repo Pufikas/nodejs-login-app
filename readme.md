@@ -12,8 +12,13 @@ Create `.env` and add the following to it.
 SESSION_SECRET=anythinghere
 ```
 
-Run `npm run devStart`
+Run 
+```
+npm run devStart
+```
+
 The website is available at `localhost:3000`
+
 
 
 **_The ``.env`` doesn't do anything at the moment_**
