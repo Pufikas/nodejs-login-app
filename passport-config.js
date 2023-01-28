@@ -1,7 +1,7 @@
 const LocalStrategy = require('passport-local').Strategy
 const bcrypt = require('bcrypt')
 
-function initialize(passport, getUserByEmail) {
+function initialize(passport, getUserByEmail, getUserById) {
   const authenticateUser = async (email, password, done) => {
     const user = getUserByEmail(email)
     if (user == null) {
@@ -21,11 +21,25 @@ function initialize(passport, getUserByEmail) {
     }
   
 
-  passport.use(new LocalStrategy({ usernameField: 'email' }), authenticateUser)
-  // in this app the usernameField is named email in the login page
-  // calls authenticateUser
-  passport.serializeUser((user, done) => { }) // stores in the session
-  passport.deserializeUser((id, done) => { }) // opposite of this ^
+  passport.use(new LocalStrategy({ usernameField: 'email' }, authenticateUser))
+
+  /* if we use
+    passport.use(new LocalStrategy({ usernameField: 'email' }), authenticateUser)
+    like that we will get error 
+    TypeError: LocalStrategy requires a verify callback, because we are not autheticating the user so we must use this to fix that
+
+    passport.use(new LocalStrategy({ usernameField: 'email' }, authenticateUser))
+
+    Notice where the ) is
+
+  *
+   in this app the usernameField is named email in the login page
+   calls authenticateUser
+  */
+  passport.serializeUser((user, done) => done(null, user.id)) // stores in the session
+  passport.deserializeUser((id, done) => {                    // opposite of this ^
+    return done(null, getUserById(id))
+  })
 }
 
 module.exports = initialize

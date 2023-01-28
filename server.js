@@ -8,11 +8,13 @@ const bcrypt = require('bcrypt') // for crypting the passwords
 const passport = require('passport')
 const flash = require('express-flash')
 const session = require('express-session')
+const methodOverride = require('method-override')
 
 const initializePassport = require('./passport-config')
 initializePassport(
   passport,
-  email => users.find(user => user.email === email)
+  email => users.find(user => user.email === email),
+  id => users.find(user => user.id === id)
 )
 
 // local var, this is just learning purposes usually we'll connect to database
@@ -26,18 +28,28 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
 }))
+
 app.use(passport.initialize())
 app.use(passport.session())
+app.use(methodOverride('_method'))
 
-app.get('/', (req, res) => { // home page
-  res.render('index.ejs', { name: 'Kyle'})
+// Auth starts here
+
+app.get('/', checkAuthenticated, (req, res) => { // home page
+  res.render('index.ejs', { name: req.user.name })
 })
 
-app.get('/login', (req, res) => { // login page
+app.get('/login', checkNotAuthenticated, (req, res) => { // login page
   res.render('login.ejs')
 })
 
-app.get('/register', (req, res) => { // register page
+app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
+  successRedirect: '/',
+  failureRedirect: '/login',
+  failureFlash: true // shows the error message
+})) //})
+
+app.get('/register', checkNotAuthenticated, (req, res) => { // register page
   res.render('register.ejs')
 })
 
@@ -56,5 +68,28 @@ app.post('/register', async (req, res) => {
   }
   console.log(users)
 })
+
+app.delete('/logout', (req, res) => {
+  req.logOut() // logOut is function from passport, normally delete is not supported using forms we are using forms in this app, so we need to install npm i method-override
+  res.redirect('/login') // not a request we WILL redirect them to login page so respond
+})
+
+function checkAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next() // if it returns true
+  }
+
+  res.redirect('login') // if false
+
+}
+
+function checkNotAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return res.redirect('/')
+  }
+
+  next() // if false
+
+}
 
 app.listen(3000)
