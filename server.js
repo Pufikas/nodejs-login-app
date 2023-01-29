@@ -33,7 +33,7 @@ app.use(passport.initialize())
 app.use(passport.session())
 app.use(methodOverride('_method'))
 
-// Auth starts here
+// App starts here
 
 app.get('/', checkAuthenticated, (req, res) => { // home page
   res.render('index.ejs', { name: req.user.name })
